@@ -2,7 +2,7 @@
 
 > End-to-end Analytics Engineering project built to simulate a real-world modern data platform for the Consumer Finance domain.
 
-## 📖 Project Overview
+## Project Overview
 
 This project demonstrates how a modern Analytics Engineering team designs, transforms, validates, orchestrates and serves analytical data.
 
@@ -21,7 +21,7 @@ The project covers:
 
 ---
 
-## 🎯 Objectives
+## Objectives
 
 - Build an end-to-end Analytics Engineering project.
 - Apply dbt best practices.
@@ -32,7 +32,7 @@ The project covers:
 
 ---
 
-## 🏦 Business Domain
+## Business Domain
 
 Consumer Finance / Banking
 
@@ -49,7 +49,7 @@ Example business areas include:
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 | Category | Technology |
 |----------|------------|
@@ -64,36 +64,27 @@ Example business areas include:
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```text
-consumer-finance-analytics-platform/
-│
-├── docs/
-├── architecture/
-├── data/
-├── dbt/
-├── airflow/
-├── scripts/
-├── dashboards/
-└── README.md
+
 ```
 
 ---
 
-## 🏗 Architecture
+## Architecture
 
 *(Coming soon)*
 
 ---
 
-## 📊 Data Model
+## Data Model
 
 *(Coming soon)*
 
 ---
 
-## 🚀 Roadmap
+## Roadmap
 
 - [x] Create repository
 - [x] Define project scope
@@ -109,8 +100,8 @@ consumer-finance-analytics-platform/
 
 ---
 
-## 📌 Project Status
+## Project Status
 
-🚧 In Progress
+In Progress
 
 This repository is under active development.
