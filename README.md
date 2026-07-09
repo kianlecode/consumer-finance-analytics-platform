@@ -36,17 +36,6 @@ The project covers:
 
 Consumer Finance / Banking
 
-Example business areas include:
-
-- Customer
-- Loan
-- Credit Card
-- Transaction
-- Payment
-- Delinquency
-- Collection
-- Risk
-
 ---
 
 ## Tech Stack
@@ -64,21 +53,7 @@ Example business areas include:
 
 ---
 
-## Project Structure
-
-```text
-
-```
-
----
-
 ## Architecture
-
-*(Coming soon)*
-
----
-
-## Data Model
 
 *(Coming soon)*
 
@@ -97,11 +72,3 @@ Example business areas include:
 - [ ] Add Airflow orchestration
 - [ ] Build Power BI dashboard
 - [ ] Complete documentation
-
----
-
-## Project Status
-
-In Progress
-
-This repository is under active development.

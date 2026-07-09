@@ -57,11 +57,17 @@ Thay vào đó, dự án sẽ áp dụng **Hybrid Dataset Strategy**.
 
 Phiên bản đầu tiên của dự án sẽ tập trung vào các domain sau:
 
-- Customer
-- Loan
-- Payment
-- Repayment
-- Collection
+Business Domain
+└── Consumer Finance
+
+Business Scenario
+└── Loan Origination through Partner Channel
+
+Partner Channel
+└── Partner App (Example: MoMo)
+
+Core Business
+└── Financial Company
 
 > **Lưu ý:** Business Scope có thể được điều chỉnh trong quá trình nghiên cứu dataset và thiết kế hệ thống.
 
