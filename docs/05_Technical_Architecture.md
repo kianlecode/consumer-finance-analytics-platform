@@ -1,4 +1,4 @@
-# Version 0.1
+# Version 0.2
 
 # Technical Architecture
 
@@ -6,9 +6,9 @@
 
 This document describes the technical architecture of the Consumer Finance Analytics Platform.
 
-The platform adopts a modern Lakehouse architecture to separate operational systems from analytical workloads while supporting scalable data ingestion, transformation, orchestration, and business analytics.
+The platform adopts a modern Lakehouse architecture that separates operational systems, compute, storage, transformation, orchestration, and analytics into independent layers.
 
-The architecture is designed to simulate a real-world enterprise data platform using open-source technologies that can be deployed locally.
+The architecture is designed to simulate a real-world enterprise Analytics Engineering platform using open-source technologies deployed locally with Docker.
 
 ---
 
@@ -29,13 +29,27 @@ Payment["Payment System<br/>PostgreSQL"]
 
 end
 
-subgraph DataPlatform["Data Platform"]
+subgraph Compute["Compute Layer"]
 
 Spark["Apache Spark"]
 
-Lakehouse["Delta Lake"]
+end
+
+subgraph Storage["Lakehouse Storage"]
+
+MinIO["MinIO Object Storage"]
+
+Delta["Delta Lake Tables<br/>(Bronze / Silver / Gold)"]
+
+end
+
+subgraph Transformation["Transformation Layer"]
 
 DBT["dbt Core"]
+
+end
+
+subgraph Orchestration["Orchestration"]
 
 Airflow["Apache Airflow"]
 
@@ -43,20 +57,23 @@ end
 
 PowerBI["Power BI"]
 
+
 Partner --> Spark
 CMS --> Spark
 LOS --> Spark
 Payment --> Spark
 
-Spark --> Lakehouse
+Spark --> Delta
+Delta --> MinIO
 
-Lakehouse --> DBT
+DBT --> Spark
 
-DBT --> PowerBI
+Spark --> Delta
+
+PowerBI --> Spark
 
 Airflow -. Orchestrates .-> Spark
 Airflow -. Orchestrates .-> DBT
-Airflow -. Orchestrates .-> PowerBI
 ```
 
 ---
@@ -67,10 +84,11 @@ Airflow -. Orchestrates .-> PowerBI
 |--------|------------|----------------|
 | Source Database | PostgreSQL | Operational transactional data |
 | Event Database | MongoDB | Customer activity and event tracking |
-| Data Ingestion | Apache Spark | Extract data from source systems into the Lakehouse |
-| Storage | Delta Lake | Store Bronze, Silver, and Gold datasets |
-| Data Transformation | dbt Core | Transform data across analytical layers |
-| Orchestration | Apache Airflow | Schedule and orchestrate data pipelines |
+| Compute Engine | Apache Spark | Data ingestion and SQL execution |
+| Object Storage | MinIO | Physical storage for analytical datasets |
+| Table Format | Delta Lake | ACID transactions, metadata management, schema enforcement, and versioning |
+| Data Transformation | dbt Core | SQL-based analytical transformations |
+| Orchestration | Apache Airflow | Pipeline scheduling and orchestration |
 | Analytics | Power BI | Reporting and dashboard visualization |
 | Development | Docker Compose | Local deployment and environment management |
 | Version Control | Git + GitHub | Source code management |
@@ -81,9 +99,9 @@ Airflow -. Orchestrates .-> PowerBI
 
 ## 1. Source Layer
 
-Operational systems generate business data during daily operations.
+Operational systems generate transactional business data.
 
-The platform uses relational and document databases to simulate real-world enterprise source systems.
+The platform simulates multiple enterprise source systems using relational and document databases.
 
 ### Technologies
 
@@ -92,11 +110,18 @@ The platform uses relational and document databases to simulate real-world enter
 
 ---
 
-## 2. Ingestion Layer
+## 2. Compute Layer
 
-The ingestion layer extracts data from operational databases and loads it into the analytical platform.
+Apache Spark serves as the central compute engine.
 
-Apache Spark is responsible for ingesting raw operational data while preserving source integrity.
+It extracts data from operational systems, writes analytical datasets into the Lakehouse, and executes transformation workloads initiated by dbt.
+
+### Responsibilities
+
+- Data ingestion
+- Distributed processing
+- SQL execution
+- Reading and writing Delta tables
 
 ### Technology
 
@@ -106,9 +131,21 @@ Apache Spark is responsible for ingesting raw operational data while preserving 
 
 ## 3. Storage Layer
 
-The platform adopts a Lakehouse architecture.
+The platform stores analytical datasets inside an Object Storage system.
 
-All analytical datasets are stored in Delta Lake across multiple logical layers.
+MinIO provides an S3-compatible storage layer that simulates enterprise cloud storage services.
+
+### Technology
+
+- MinIO
+
+---
+
+## 4. Lakehouse Layer
+
+Analytical datasets are stored using the Delta Lake table format.
+
+Delta Lake provides ACID transactions, schema evolution, metadata management, and version control over Parquet files stored inside MinIO.
 
 ### Logical Layers
 
@@ -122,11 +159,11 @@ All analytical datasets are stored in Delta Lake across multiple logical layers.
 
 ---
 
-## 4. Transformation Layer
+## 5. Transformation Layer
 
 Business transformations are implemented using dbt Core.
 
-Data is progressively transformed from raw operational datasets into trusted analytical models.
+dbt sends SQL models to Apache Spark, which executes transformations against Delta Lake tables.
 
 ### Responsibilities
 
@@ -142,9 +179,11 @@ Data is progressively transformed from raw operational datasets into trusted ana
 
 ---
 
-## 5. Analytics Layer
+## 6. Analytics Layer
 
-Business users consume trusted datasets through interactive dashboards and analytical reports.
+Business users consume trusted Gold datasets through dashboards and analytical reports.
+
+Power BI connects to the analytical platform for reporting.
 
 ### Technology
 
@@ -152,11 +191,16 @@ Business users consume trusted datasets through interactive dashboards and analy
 
 ---
 
-## 6. Orchestration Layer
+## 7. Orchestration Layer
 
-Pipeline execution is coordinated through workflow orchestration.
+Apache Airflow coordinates the execution of ingestion, transformation, and reporting workflows.
 
-Scheduled jobs automate ingestion, transformation, and analytical refresh processes.
+### Responsibilities
+
+- Pipeline scheduling
+- Workflow orchestration
+- Dependency management
+- Monitoring
 
 ### Technology
 
@@ -174,18 +218,32 @@ PostgreSQL / MongoDB
         ▼
 
 Apache Spark
+(Compute Engine)
 
         │
 
         ▼
 
-Delta Lake
-
+Delta Lake Tables
 (Bronze → Silver → Gold)
 
         │
 
         ▼
+
+MinIO
+(Object Storage)
+
+        ▲
+
+        │
+
+Apache Spark SQL
+(Executed by dbt Core)
+
+        ▲
+
+        │
 
 dbt Core
 
@@ -195,12 +253,9 @@ dbt Core
 
 Power BI
 
-        ▲
-
-        │
 
 Apache Airflow
-(Workflow Orchestration)
+Orchestrates Spark and dbt pipelines
 ```
 
 ---
@@ -210,9 +265,11 @@ Apache Airflow
 The technical architecture follows several key principles:
 
 - Separate operational systems from analytical workloads.
-- Preserve raw source data before applying transformations.
-- Adopt a Lakehouse architecture for scalable analytical storage.
-- Implement transformations using ELT principles with dbt Core.
-- Orchestrate pipeline execution through Apache Airflow.
-- Use open-source technologies suitable for local development.
-- Design the platform to be modular, maintainable, and extensible.
+- Separate compute from storage.
+- Preserve raw operational data before transformation.
+- Store analytical datasets using the Delta Lake table format.
+- Use object storage compatible with cloud-native architectures.
+- Implement SQL-based ELT transformations through dbt Core.
+- Orchestrate data pipelines using Apache Airflow.
+- Build the platform using open-source technologies suitable for local development.
+- Design the platform to be modular, scalable, maintainable, and extensible.
