@@ -1,0 +1,190 @@
+==================================================
+CONSUMER FINANCE DATA PLATFORM ROADMAP
+==================================================
+
+Mục tiêu
+---------
+- Build hoàn chỉnh Modern Data Platform
+- Học Analytics Engineering + Data Engineering
+- Xây dựng Portfolio Project
+
+==================================================
+PHASE 1 - ARCHITECTURE
+==================================================
+
+[✓] 01 Business Overview
+[✓] 02 Source Systems
+[✓] 03 Business Process
+[✓] 04 Logical Data Flow
+[✓] 05 Technical Architecture
+
+==================================================
+PHASE 2 - SOURCE SYSTEM
+==================================================
+
+Thiết kế
+---------
+[ ] Source Data Model
+[ ] PostgreSQL Schema
+[ ] MongoDB Collections
+
+Học
+----
+[ ] Docker
+[ ] PostgreSQL
+[ ] MongoDB
+
+Build
+------
+[ ] Docker Compose
+[ ] PostgreSQL
+[ ] MongoDB
+[ ] Source Database
+
+==================================================
+PHASE 3 - BUSINESS RULE & DATA GENERATION
+==================================================
+
+Thiết kế
+---------
+[ ] Business Rule
+[ ] Data Generation Strategy
+
+Học
+----
+[ ] Python Generator
+[ ] Faker
+[ ] Random Data Simulation
+
+Build
+------
+[ ] Customer Generator
+[ ] Loan Application Generator
+[ ] Contract Generator
+[ ] Loan Generator
+[ ] Payment Generator
+[ ] Event Generator
+
+==================================================
+PHASE 4 - DATA INGESTION
+==================================================
+
+Thiết kế
+---------
+[ ] Ingestion Design
+
+Học
+----
+[ ] Apache Spark
+[ ] Spark SQL
+[ ] JDBC
+[ ] MongoDB Connector
+
+Build
+------
+[ ] Read PostgreSQL
+[ ] Read MongoDB
+[ ] Bronze Layer
+
+==================================================
+PHASE 5 - LAKEHOUSE
+==================================================
+
+Thiết kế
+---------
+[ ] Lakehouse Design
+
+Học
+----
+[ ] Delta Lake
+[ ] Bronze Layer
+[ ] Silver Layer
+[ ] Gold Layer
+
+Build
+------
+[ ] Bronze Tables
+[ ] Silver Tables
+[ ] Gold Tables
+
+==================================================
+PHASE 6 - ANALYTICS ENGINEERING
+==================================================
+
+Thiết kế
+---------
+[ ] Analytics Data Model
+
+Học
+----
+[ ] dbt Core
+[ ] Sources
+[ ] Models
+[ ] Tests
+[ ] Snapshots
+[ ] Incremental Models
+
+Build
+------
+[ ] Bronze Models
+[ ] Silver Models
+[ ] Gold Models
+[ ] Data Quality Tests
+
+==================================================
+PHASE 7 - BUSINESS INTELLIGENCE
+==================================================
+
+Thiết kế
+---------
+[ ] Dashboard Design
+
+Học
+----
+[ ] Power BI
+[ ] DAX
+[ ] Dashboard Design
+
+Build
+------
+[ ] Executive Dashboard
+[ ] Customer Dashboard
+[ ] Loan Dashboard
+[ ] Portfolio Dashboard
+
+==================================================
+PHASE 8 - ORCHESTRATION
+==================================================
+
+Thiết kế
+---------
+[ ] Pipeline Schedule
+
+Học
+----
+[ ] Apache Airflow
+[ ] DAG
+[ ] Scheduler
+[ ] Monitoring
+
+Build
+------
+[ ] Daily Pipeline
+[ ] Monthly Pipeline
+[ ] Monitoring
+
+==================================================
+PROJECT STATUS
+==================================================
+
+Architecture      [█████░░░░░]
+Implementation    [░░░░░░░░░░]
+Learning          [░░░░░░░░░░]
+
+Current Task
+------------
+Finish Technical Architecture (File 05)
+
+Next Task
+---------
+Design Source Data Model

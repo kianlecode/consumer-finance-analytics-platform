@@ -2,171 +2,194 @@
 
 ## Overview
 
-This document describes the end-to-end business process of a loan application through a partner channel.
+This document describes the end-to-end loan business process within the Consumer Finance Analytics Platform.
 
-Customers apply for loan products using a Partner App. The application is then processed by the financial company's operational systems until the loan is either approved or rejected. If approved, the loan is disbursed and managed throughout its repayment lifecycle.
+The process begins when a customer applies for a loan through a partner channel and ends when the loan is fully repaid.
+
+Each operational system is responsible for a specific stage of the business process, ensuring clear ownership of business activities and operational data.
 
 ---
 
-# Business Process Flow
+# End-to-End Business Process
 
 ```mermaid
 flowchart LR
 
-Customer([Customer])
+Customer["Customer"]
 
 Partner["Partner App"]
 
-LOS["Loan Origination System"]
-
 CMS["Customer Management System"]
+
+LOS["Loan Origination System"]
 
 Payment["Payment System"]
 
-Customer -->|1. Register Loan| Partner
+Customer --> Partner
 
-Partner -->|2. Submit Application| LOS
-
-LOS -->|3. Verify Customer| CMS
+Partner --> LOS
 
 CMS --> LOS
 
-LOS -->|4. Evaluate Application| LOS
-
-LOS -->|5. Approve / Reject| LOS
-
-LOS -->|6. Create Contract| LOS
-
-LOS -->|7. Request Disbursement| Payment
-
-Payment -->|8. Disburse Loan| Customer
-
-Customer -->|9. Repayment| Payment
+LOS --> Payment
 ```
 
 ---
 
-# Business Process
+# Business Process Stages
 
-## Step 1 – Loan Registration
+## 1. Customer Registration
 
-The customer accesses the Partner App and selects a loan product.
+Customers browse available loan products through a partner application and submit a loan registration request.
 
-The customer provides the required information and submits a loan application.
+At this stage, the Partner App records customer acquisition information and creates the initial loan application request.
 
-**Output**
+### Activities
 
-- Loan Registration
-- Loan Application
+- Browse loan products
+- Register for a loan
+- Submit loan application
+- Capture acquisition information
 
----
+### Generated Data
 
-## Step 2 – Application Submission
-
-The Partner App sends the loan application to the Loan Origination System (LOS).
-
-LOS creates a new application and begins the loan processing workflow.
-
-**Output**
-
-- New Loan Application
-- Initial Application Status
+- Customer Registration
+- Loan Application Submission
+- Customer Activity
 
 ---
 
-## Step 3 – Customer Verification
+## 2. Customer Verification
 
-LOS verifies whether the customer already exists in the Customer Management System (CMS).
+After receiving the loan application, the Loan Origination System retrieves customer master information from the Customer Management System.
 
-If the customer already exists, customer information is retrieved.
+The application is validated before entering the credit assessment process.
 
-Otherwise, a new customer profile is created.
+### Activities
 
-**Output**
+- Retrieve customer profile
+- Validate customer information
+- Verify application completeness
 
-- Customer Profile
-- Customer Verification Result
+### Generated Data
 
----
-
-## Step 4 – Application Evaluation
-
-LOS validates the application based on internal business rules.
-
-Examples include:
-
-- Required information
-- Customer eligibility
-- Basic validation
-
-The application is then evaluated for approval.
-
-**Output**
-
-- Evaluation Result
+- Customer Snapshot
+- Validated Application
 
 ---
 
-## Step 5 – Loan Decision
+## 3. Loan Assessment
 
-LOS determines whether the application is approved or rejected.
+The Loan Origination System performs loan assessment by evaluating customer information and requesting external credit assessment services.
 
-If rejected, the application process ends.
+Based on the assessment result, the application is either approved or rejected.
 
-If approved, the loan process continues.
+### Activities
 
-**Output**
+- Assess loan application
+- Perform credit assessment
+- Evaluate lending rules
+- Approve or reject application
 
+### Generated Data
+
+- Application Status
 - Approval Result
 - Rejection Result
 
 ---
 
-## Step 6 – Contract Creation
+## 4. Contract Generation
 
-For approved applications, LOS creates the loan contract and loan record.
+For approved applications, the Loan Origination System generates the loan contract and creates the corresponding loan account.
 
-These records become the official representation of the approved loan.
+### Activities
 
-**Output**
+- Generate loan contract
+- Create loan account
+- Activate loan
+
+### Generated Data
 
 - Loan Contract
-- Loan
+- Loan Information
 
 ---
 
-## Step 7 – Loan Disbursement
+## 5. Loan Servicing
 
-LOS requests the Payment System to disburse the approved loan amount.
+After loan activation, the Payment System manages all financial transactions throughout the loan lifecycle.
 
-The Payment System processes the transaction and transfers the funds to the customer.
+### Activities
 
-**Output**
+- Process loan disbursement
+- Generate repayment schedule
+- Receive repayments
+- Update loan balance
 
-- Disbursement Transaction
+### Generated Data
 
----
-
-## Step 8 – Loan Repayment
-
-After the loan has been disbursed, the customer repays the loan according to the repayment schedule.
-
-Each repayment is processed and recorded by the Payment System.
-
-**Output**
-
-- Repayment Transaction
+- Loan Disbursement
+- Payment Schedule
+- Loan Repayment
+- Payment Transaction
 
 ---
 
-# Business Outcome
+# Business Process Summary
 
-At the end of the business process, one of the following outcomes is produced:
+```text
+Customer
 
-- Loan Application Rejected
-- Loan Approved
-- Loan Contract Created
-- Loan Disbursed
-- Loan Repayment Recorded
+        │
 
-The generated business data serves as the primary input for the Data Platform.
+        ▼
+
+Partner App
+(Customer Registration)
+
+        │
+
+        ▼
+
+Loan Origination System
+(Application Processing)
+
+        │
+
+        ▼
+
+Customer Management System
+(Customer Verification)
+
+        │
+
+        ▼
+
+Loan Assessment
+
+        │
+
+        ▼
+
+Loan Contract
+
+        │
+
+        ▼
+
+Payment System
+(Loan Servicing)
+```
+
+---
+
+# Business Process Principles
+
+The business process follows several principles:
+
+- Customer acquisition is handled by the Partner App.
+- Customer master information is managed by the Customer Management System.
+- Loan processing is managed by the Loan Origination System.
+- Loan servicing is managed by the Payment System.
+- Each business activity is owned by a dedicated operational system.
