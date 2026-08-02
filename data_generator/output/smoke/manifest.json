@@ -1,0 +1,41 @@
+{
+  "seed": 20260801,
+  "as_of_date": "2026-07-31",
+  "registration_count": 28,
+  "scenario_counts": {
+    "ACTIVE_NO_REPAYMENT": 2,
+    "ACTIVE_PAID": 2,
+    "ACTIVE_PARTIAL": 2,
+    "APPROVED_NO_DISBURSEMENT": 2,
+    "ASSESSMENT_FAIL": 2,
+    "CANCELLED": 2,
+    "CLOSED": 2,
+    "DISBURSEMENT_REJECTED": 2,
+    "MANUAL_REVIEW": 2,
+    "PENDING_DISBURSEMENT": 2,
+    "RECEIVED": 2,
+    "RULE_REJECT": 2,
+    "SUBMISSION_FAILED": 2,
+    "VALIDATING": 2
+  },
+  "row_counts": {
+    "partner_app/partner": 3,
+    "partner_app/campaign": 6,
+    "partner_app/customer_registration": 28,
+    "partner_app/application_submission": 26,
+    "cms/customer": 23,
+    "los/loan_application": 24,
+    "los/application_status_history": 116,
+    "los/credit_assessment": 20,
+    "los/rule_evaluation": 54,
+    "los/application_decision": 20,
+    "los/disbursement_request": 12,
+    "payment/loan_contract": 10,
+    "payment/repayment_schedule": 228,
+    "payment/payment_transaction": 29
+  },
+  "excluded_tables": [
+    "partner_app.customer_activity",
+    "partner_app.notification_log"
+  ]
+}

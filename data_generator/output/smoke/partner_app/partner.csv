@@ -1,0 +1,4 @@
+﻿partner_id,partner_code,partner_name,partner_type,status,created_at,updated_at
+6db00a2c-4575-5ea9-8f11-03229e5dfc72,MOMO,MoMo,FINTECH,ACTIVE,2024-12-01 09:00:00,
+4d414dc1-c726-5bfc-a155-860fa3e050a8,ZALO,Zalo,FINTECH,ACTIVE,2024-12-02 09:00:00,
+87d7bdce-bf41-585f-8ac0-df785049783a,TIKI,Tiki,ECOMMERCE,ACTIVE,2024-12-03 09:00:00,
