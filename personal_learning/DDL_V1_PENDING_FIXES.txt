@@ -1,0 +1,329 @@
+CONSUMER FINANCE ANALYTICS PLATFORM
+TỔNG HỢP CÁC NỘI DUNG CẦN SỬA TRƯỚC KHI CHỐT SOURCE SYSTEM DDL V1
+
+Ngày tổng hợp: 07/08/2026
+
+======================================================================
+1. BỐI CẢNH VÀ NGUYÊN TẮC ĐÃ CHỐT
+======================================================================
+
+Bộ source system hiện gồm 16 bảng thuộc 4 hệ thống:
+
+- Partner App: 4 bảng
+- CMS: 1 bảng
+- LOS: 7 bảng
+- Payment System: 4 bảng
+
+Nguyên tắc constraint tại source system:
+
+- Giữ PRIMARY KEY để định danh bản ghi.
+- Giữ FOREIGN KEY cho quan hệ giữa các bảng trong cùng database.
+- Giữ UNIQUE cho các khóa nghiệp vụ cần chống trùng.
+- Giữ NOT NULL cho các trường bắt buộc về mặt cấu trúc.
+- Không tạo FOREIGN KEY xuyên database giữa các source system.
+- Bỏ toàn bộ CHECK constraint dùng để kiểm tra domain, khoảng giá trị
+  hoặc business rule.
+- Các rule chất lượng dữ liệu sẽ được kiểm tra tại DWH/dbt.
+
+Mục đích của việc bỏ CHECK business rule ở source là để Data Generator có
+thể chủ động sinh cả dữ liệu đúng và dữ liệu bất thường phục vụ luyện tập
+data quality.
+
+
+======================================================================
+2. CÁC NỘI DUNG BẮT BUỘC PHẢI SỬA
+======================================================================
+
+2.1. Xóa toàn bộ 20 CHECK constraint còn lại
+--------------------------------------------------
+
+Các file đang còn CHECK constraint:
+
+- campaign_ddl.sql:                         2 CHECK
+- customer_registration_ddl.sql:            4 CHECK
+- application_ddl.sql:                      3 CHECK
+- application_status_history_ddl.sql:       1 CHECK
+- credit_assessment_ddl.sql:                5 CHECK
+- application_decision_ddl.sql:             4 CHECK
+- fulfillment_request_ddl.sql:              1 CHECK
+                                           ----------
+  Tổng cộng:                                20 CHECK
+
+Cần xóa các khối có dạng:
+
+    CONSTRAINT <constraint_name>
+        CHECK (...)
+
+Lưu ý khi xóa:
+
+- Kiểm tra lại dấu phẩy giữa các cột và constraint để DDL không lỗi cú pháp.
+- Không xóa nhầm PRIMARY KEY, FOREIGN KEY, UNIQUE hoặc NOT NULL.
+- CMS và Payment System hiện đã tuân theo nguyên tắc không dùng CHECK,
+  không cần xử lý thêm phần này.
+
+
+2.2. Sửa ba thuộc tính trong customer_registration_ddl.sql
+------------------------------------------------------------
+
+Cấu trúc cần chốt:
+
+    campaign_id    UUID          NOT NULL,
+    customer_id    UUID,
+    product_group  VARCHAR(20)   NOT NULL,
+
+Ý nghĩa:
+
+- campaign_id phải NOT NULL vì mỗi registration phải xác định được campaign.
+- customer_id phải cho phép NULL vì khách hàng NEW_TO_BANK chưa có customer_id
+  của CMS tại thời điểm bắt đầu đăng ký.
+- product_group dùng VARCHAR(20) để khớp Data Dictionary hiện hành.
+
+Đây là thay đổi bắt buộc. Nếu customer_id vẫn để NOT NULL thì luồng khách hàng
+mới sẽ không thể được ghi nhận đúng tại Partner App.
+
+
+2.3. Sửa default của campaign.status trong campaign_ddl.sql
+------------------------------------------------------------
+
+DDL hiện tại:
+
+    status VARCHAR(20) NOT NULL DEFAULT 'DRAFT'
+
+Cần sửa thành:
+
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'
+
+Lý do:
+
+- Data Dictionary V1 đang xác định trạng thái chuẩn là ACTIVE và CLOSED.
+- Default DRAFT hiện nằm ngoài domain nghiệp vụ đã thiết kế.
+- Dù source không dùng CHECK constraint, default vẫn nên sinh ra giá trị chuẩn.
+
+
+======================================================================
+3. CÁC INDEX NÊN BỔ SUNG
+======================================================================
+
+Nhóm index này không chặn việc tạo bảng nhưng nên thêm trước khi triển khai
+ingestion/incremental load.
+
+3.1. Index phục vụ incremental load theo updated_at
+---------------------------------------------------
+
+    CREATE INDEX idx_customer_registration_updated_at
+        ON customer_registration (updated_at);
+
+    CREATE INDEX idx_application_submission_updated_at
+        ON application_submission (updated_at);
+
+    CREATE INDEX idx_application_updated_at
+        ON application (updated_at);
+
+    CREATE INDEX idx_credit_assessment_updated_at
+        ON credit_assessment (updated_at);
+
+3.2. Index phục vụ truy vấn hợp đồng theo khách hàng
+---------------------------------------------------
+
+    CREATE INDEX idx_contract_customer_id
+        ON contract (customer_id);
+
+Lưu ý:
+
+- Đây là các đề xuất tối ưu, không phải lỗi cấu trúc DDL.
+- partner và campaign là bảng nhỏ nên chưa cần index riêng trên updated_at.
+- Trước khi thêm, kiểm tra file hiện tại để tránh tạo trùng index.
+
+
+======================================================================
+4. CÁC NỘI DUNG CẦN ĐỒNG BỘ LẠI DATA DICTIONARY
+======================================================================
+
+4.1. updated_at của một số bảng Partner App
+-------------------------------------------
+
+DDL đang dùng:
+
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+
+và trigger set_updated_at().
+
+Nên giữ thiết kế này vì:
+
+- Bản ghi luôn có thời điểm cập nhật ban đầu.
+- Trigger tự cập nhật khi bản ghi thay đổi.
+- Thuận lợi cho incremental load.
+- Đồng nhất giữa Partner App, CMS, LOS và Payment System.
+
+Nếu Data Dictionary đang để updated_at nullable hoặc không có default thì
+cập nhật Data Dictionary theo DDL, không cần sửa ngược DDL.
+
+
+4.2. CMS customer
+-----------------
+
+Data Dictionary CMS vẫn có thể đang mô tả CHECK cho:
+
+- gender
+- customer_status
+
+Cần xóa mô tả CHECK này khỏi Data Dictionary để đồng nhất với nguyên tắc mới.
+Các giá trị chuẩn vẫn được mô tả như domain nghiệp vụ, nhưng database source
+không khóa cứng bằng CHECK constraint.
+
+
+======================================================================
+5. NHỮNG PHẦN ĐÃ REVIEW VÀ ĐANG ỔN
+======================================================================
+
+- CMS, LOS và Payment System khớp cấu trúc cột, kiểu dữ liệu, nullability
+  và default của Data Dictionary, ngoại trừ các CHECK cũ cần xóa ở LOS.
+- Khóa ngoại giữa các bảng trong cùng database hợp lý.
+- Không tạo khóa ngoại vật lý xuyên database là đúng thiết kế.
+- Các trường liên kết xuyên hệ thống đang đồng nhất:
+
+    request_id                         VARCHAR(100)
+    registration_id                    UUID
+    customer_id                        UUID
+    request_no                         VARCHAR(50)
+    fulfillment_request_no             VARCHAR(50)
+    payment_reference_id               VARCHAR(100)
+
+- payment_transaction tham chiếu đúng contract, repayment_schedule và
+  card_statement.
+- application_status_history và rule_evaluation không cần updated_at;
+  changed_at và evaluated_at đã đủ thể hiện thời điểm sự kiện.
+- common_function.sql hợp lệ và phải được chạy riêng trong từng database.
+- PostgreSQL 17 hỗ trợ gen_random_uuid() trong cấu hình hiện tại.
+- Tổng thể kiến trúc DDL V1 không cần thiết kế lại.
+
+
+======================================================================
+6. THỨ TỰ SỬA Ở BUỔI LÀM VIỆC TIẾP THEO
+======================================================================
+
+Bước 1:
+Sửa campaign_ddl.sql:
+
+- Xóa 2 CHECK constraint.
+- Đổi default status từ DRAFT thành ACTIVE.
+
+Bước 2:
+Sửa customer_registration_ddl.sql:
+
+- Xóa 4 CHECK constraint.
+- campaign_id thành UUID NOT NULL.
+- customer_id thành UUID, cho phép NULL.
+- product_group thành VARCHAR(20) NOT NULL.
+- Bổ sung index updated_at.
+
+Bước 3:
+Sửa các DDL còn lại của Partner App và LOS để xóa toàn bộ CHECK:
+
+- application_ddl.sql
+- application_status_history_ddl.sql
+- credit_assessment_ddl.sql
+- application_decision_ddl.sql
+- fulfillment_request_ddl.sql
+
+Bước 4:
+Bổ sung các index còn lại:
+
+- application_submission.updated_at
+- application.updated_at
+- credit_assessment.updated_at
+- contract.customer_id
+
+Bước 5:
+Tìm lại toàn bộ CHECK constraint trong thư mục DDL. Kết quả mong đợi là không
+còn CHECK nào thuộc domain hoặc business rule.
+
+Bước 6:
+Kiểm tra lại cú pháp của từng file sau khi xóa constraint, đặc biệt là dấu phẩy
+cuối cột và giữa các constraint.
+
+Bước 7:
+Chạy lại DDL theo đúng thứ tự phụ thuộc trên PostgreSQL/Docker và xác nhận toàn
+bộ bảng, trigger, foreign key và index được tạo thành công.
+
+Bước 8:
+Cập nhật Data Dictionary để phản ánh các quyết định DDL cuối cùng.
+
+
+======================================================================
+7. THỨ TỰ CHẠY DDL SAU KHI SỬA
+======================================================================
+
+Partner App:
+
+    common_function
+    -> partner
+    -> campaign
+    -> customer_registration
+    -> application_submission
+
+CMS:
+
+    common_function
+    -> customer
+
+LOS:
+
+    common_function
+    -> application
+    -> application_status_history / credit_assessment / rule_evaluation
+    -> application_decision
+    -> fulfillment_request
+
+Payment System:
+
+    common_function
+    -> contract
+    -> repayment_schedule / card_statement
+    -> payment_transaction
+
+
+======================================================================
+8. CÁCH ÁP DỤNG VÀO DATABASE ĐÃ TẠO
+======================================================================
+
+Việc sửa file DDL không tự động thay đổi các bảng đã được tạo trong PostgreSQL.
+Sau khi quay lại máy nhà cần chọn một trong hai cách:
+
+Cách 1 - phù hợp giai đoạn hiện tại, chưa có dữ liệu quan trọng:
+
+- Sửa toàn bộ file DDL.
+- Xóa và tạo lại các bảng/schema thử nghiệm theo đúng thứ tự.
+- Chạy lại DDL sạch từ đầu.
+
+Cách 2 - dùng khi đã có dữ liệu cần giữ:
+
+- Viết ALTER TABLE để drop constraint và thay đổi nullability/type/default.
+- Tạo bổ sung các index bằng CREATE INDEX.
+- Không drop/recreate bảng nếu chưa sao lưu hoặc chưa xác định dữ liệu có thể bỏ.
+
+Ở giai đoạn hiện tại của project, nếu database mới chỉ dùng để thử DDL và chưa
+có dữ liệu quan trọng thì cách 1 thường đơn giản và ít để lại sai lệch nhất.
+
+
+======================================================================
+9. TIÊU CHÍ CHỐT DDL V1
+======================================================================
+
+Chỉ chốt DDL V1 khi đáp ứng đủ các điều kiện sau:
+
+[ ] Đã xóa đủ 20 CHECK constraint cũ.
+[ ] campaign.status mặc định là ACTIVE.
+[ ] customer_registration.campaign_id là NOT NULL.
+[ ] customer_registration.customer_id cho phép NULL.
+[ ] customer_registration.product_group là VARCHAR(20).
+[ ] Đã xem xét và bổ sung 5 index đề xuất.
+[ ] Không còn lỗi cú pháp sau khi chỉnh dấu phẩy/constraint.
+[ ] DDL chạy thành công trên PostgreSQL 17 theo đúng thứ tự phụ thuộc.
+[ ] Trigger set_updated_at hoạt động trên các bảng có updated_at.
+[ ] Data Dictionary đã được đồng bộ với DDL cuối cùng.
+[ ] Không tạo FOREIGN KEY xuyên database.
+
+Sau khi hoàn tất checklist trên, có thể chốt Source System DDL V1 và chuyển
+sang bước tiếp theo: hoàn thiện thiết kế Data Generator, xác định thứ tự sinh
+dữ liệu xuyên hệ thống và triển khai dữ liệu demo theo business flow.
