@@ -139,37 +139,98 @@ Lưu ý:
 4. CÁC NỘI DUNG CẦN ĐỒNG BỘ LẠI DATA DICTIONARY
 ======================================================================
 
-4.1. updated_at của một số bảng Partner App
--------------------------------------------
+Sau khi sửa xong DDL, cần đồng bộ lại Data Dictionary để tài liệu và cấu trúc database thống nhất với nhau.
 
-DDL đang dùng:
+4.1. Partner App – bảng customer_registration
 
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+Cập nhật các trường sau:
 
-và trigger set_updated_at().
+* campaign_id:
 
-Nên giữ thiết kế này vì:
+  * Chuyển thành NOT NULL.
+  * Mỗi lượt đăng ký phải xác định được chiến dịch nguồn.
 
-- Bản ghi luôn có thời điểm cập nhật ban đầu.
-- Trigger tự cập nhật khi bản ghi thay đổi.
-- Thuận lợi cho incremental load.
-- Đồng nhất giữa Partner App, CMS, LOS và Payment System.
+* customer_id:
 
-Nếu Data Dictionary đang để updated_at nullable hoặc không có default thì
-cập nhật Data Dictionary theo DDL, không cần sửa ngược DDL.
+  * Chuyển thành nullable.
+  * Khách hàng NEW_TO_BANK có thể chưa tồn tại trong CMS tại thời điểm bắt đầu đăng ký.
+  * customer_id chỉ được bổ sung sau khi CMS nhận diện hoặc tạo khách hàng.
 
+* product_group:
 
-4.2. CMS customer
------------------
+  * Đổi kiểu dữ liệu từ VARCHAR(30) thành VARCHAR(20).
 
-Data Dictionary CMS vẫn có thể đang mô tả CHECK cho:
+4.2. Partner App – bảng campaign
 
-- gender
-- customer_status
+Cập nhật trường status:
 
-Cần xóa mô tả CHECK này khỏi Data Dictionary để đồng nhất với nguyên tắc mới.
-Các giá trị chuẩn vẫn được mô tả như domain nghiệp vụ, nhưng database source
-không khóa cứng bằng CHECK constraint.
+* Giá trị mặc định: đổi từ DRAFT thành ACTIVE.
+* Domain hiện tại gồm:
+
+  * ACTIVE
+  * CLOSED
+
+Không sử dụng DRAFT vì giá trị này không nằm trong domain trạng thái đã chốt cho V1.
+
+4.3. Xóa thông tin CHECK constraint
+
+Xóa toàn bộ mô tả CHECK constraint còn ghi trong Data Dictionary.
+
+Source database chỉ giữ các constraint cấu trúc:
+
+* PRIMARY KEY
+* FOREIGN KEY trong cùng database
+* UNIQUE
+* NOT NULL
+
+Không sử dụng CHECK constraint để khóa:
+
+* Miền giá trị.
+* Trạng thái nghiệp vụ.
+* Giá trị số tiền.
+* Quan hệ giữa các ngày.
+* Quy tắc riêng theo từng sản phẩm.
+* Các business rule khác.
+
+Các quy tắc này sẽ được kiểm tra tại tầng DWH/dbt để Data Generator vẫn có thể chủ động tạo dữ liệu sai phục vụ kiểm thử chất lượng dữ liệu.
+
+Lưu ý kiểm tra và xóa các mô tả CHECK còn tồn tại, bao gồm gender và customer_status trong CMS Data Dictionary.
+
+4.4. Đồng bộ metadata của updated_at
+
+Đối với các bảng đang sử dụng trigger set_updated_at(), cập nhật Data Dictionary thành:
+
+updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+
+Ý nghĩa:
+
+* Có giá trị ngay khi bản ghi được tạo.
+* Được trigger tự động cập nhật khi bản ghi thay đổi.
+* Được sử dụng làm mốc incremental load.
+
+Không cần áp dụng updated_at cho các bảng lịch sử hoặc bảng sự kiện bất biến nếu chúng đã có trường thời gian nghiệp vụ riêng, ví dụ:
+
+* application_status_history sử dụng changed_at.
+* rule_evaluation sử dụng evaluated_at.
+
+4.5. Phạm vi không cần cập nhật vào Data Dictionary
+
+Các index bổ sung trong DDL không cần đưa vào Data Dictionary nếu workbook chỉ dùng để mô tả cấu trúc và ý nghĩa dữ liệu nghiệp vụ.
+
+Danh sách index và trigger kỹ thuật sẽ được quản lý trực tiếp trong các file DDL.
+
+4.6. Kiểm tra sau khi cập nhật
+
+Sau khi cập nhật Data Dictionary, đối chiếu lại với DDL để xác nhận:
+
+* Tên bảng và tên cột giống nhau.
+* Kiểu dữ liệu và độ dài giống nhau.
+* Nullability giống nhau.
+* Default value giống nhau.
+* Không còn mô tả CHECK constraint.
+* Các trường liên kết xuyên hệ thống có cùng kiểu dữ liệu.
+* updated_at được mô tả thống nhất với cơ chế trigger trong DDL.
+
 
 
 ======================================================================
